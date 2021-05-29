@@ -256,12 +256,9 @@ while(True):
         adc1 = ads1115.readVoltage(1)
         result = (" %d "%(adc1['r']))
         tdsint = result
-        sensorValue = float(tdsint)* 5 / 1024.0
-        tdsValue = (133.42/sensorValue*sensorValue*sensorValue-255.85*sensorValue*sensorValue+857.39*sensorValue)*0.5
         time.sleep(0.2)
-        tdsValuenew = int(tdsValue)
-        tds = str(tdsValuenew)
-        outputtds= tds + " PPM"
+        tds = str(tdsint)
+        outputtds= str(int(tds)/10) + "PPM"
         cv2.putText(frame,
                     outputtds,
                     (440, 430),

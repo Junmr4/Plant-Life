@@ -12,6 +12,10 @@ from CQRobot_ADS1115 import ADS1115
 import cv2,io,imutils
 from imutils.video import VideoStream
 sys.path.append('../')
+sys.path.insert(0,'./libs/DFRobot_ADS1115/RaspberryPi/Python/')
+sys.path.insert(0,'./src/')
+from DFRobot_ADS1115 import ADS1115
+from GreenPonik_PH import GreenPonik_PH
 from PIL import Image, ImageTk
 import glob
 
@@ -27,6 +31,7 @@ ads1115 = ADS1115()
 #roomsensor
 sensor = bme680.BME680()
 
+
 sensor.set_humidity_oversample(bme680.OS_2X)
 sensor.set_pressure_oversample(bme680.OS_4X)
 sensor.set_temperature_oversample(bme680.OS_8X)
@@ -38,6 +43,10 @@ os.system('modprobe w1-therm')
 base_dir = '/sys/bus/w1/devices/'
 device_folder = glob.glob(base_dir + '28*')[0]
 device_file = device_folder + '/w1_slave'
+
+#initialize ph
+ph = GreenPonik_PH()
+ph.begin()
 
 def read_temp_raw():
     f = open(device_file, 'r')
@@ -56,7 +65,22 @@ def read_temp():
         temp_c = float(temp_string) / 1000.0
         temp_f = temp_c * 9.0 / 5.0 + 32.0
         return temp_f
-    
+#readph
+def read_ph():
+    global ads1115
+    global ph
+    # Set the IIC address
+    ads1115.setAddr_ADS1115(0x48)
+    # Sets the gain and input voltage range.
+    ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
+    # Get the Digital Value of Analog of selected channel
+    adc1 = ads1115.readVoltage(1)
+    # Convert voltage to pH
+    PH = ph.readPH(adc1['r'])
+    ph1 = round(PH)
+    ph2 = str(ph1) + ' PH'
+    return ph2
+    time.sleep(2)
 
 #bootup image
 rootboot = tkinter.Tk()
@@ -191,21 +215,19 @@ while(True):
                     cv2.LINE_4)
 
 #PH
-         #Water Temperature
-        newphsensor = (sensor.data.temperature * 1.8) +32
-        ph = "{0:.0f}".format(newphsensor)
-        phstr = str(ph)
-        outputph= phstr
+#         phstr = str(ph)
+#         outputph= phstr
+    if __name__ == "__main__":
         cv2.putText(frame,
-                    outputph,
-                    (162, 430),
+                    read_ph(),
+                    (138, 430),
                     2, .7,
                     (0, 255, 255),
                     2,
                     cv2.LINE_4)
         cv2.putText(frame,
                     "Water pH",
-                    (140, 460),
+                    (144, 460),
                     2, .5,
                     (0, 255, 255),
                     2,
@@ -246,7 +268,7 @@ while(True):
 #                     cv2.LINE_4)
         cv2.putText(frame,
                     "Water Level",
-                    (271, 463),
+                    (273, 463),
                     2, .7,
                     (0, 255, 255),
                     2,
@@ -260,17 +282,17 @@ while(True):
         tdsint = result
         time.sleep(2)
         tds = str(tdsint)
-        outputtds= tds + " PPM"
+        outputtds= str(int(tds)/10) + "PPM"
         cv2.putText(frame,
                     outputtds,
-                    (440, 430),
+                    (430, 430),
                     2, .7,
                     (0, 255, 255),
                     2,
                     cv2.LINE_4)
         cv2.putText(frame,
                     "Water Quality",
-                    (440, 463),
+                    (445, 463),
                     2, .5,
                     (0, 255, 255),
                     2,
